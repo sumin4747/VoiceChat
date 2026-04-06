@@ -21,6 +21,10 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
+  task:
+    scheduling:
+      enabled: true
+
 jwt:
   secret: placeholder
   expiration: 3600000
