@@ -149,6 +149,17 @@ public class UserVoiceController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{voiceId}/reminder")
+    public ResponseEntity<?> updateReminder(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long voiceId,
+            @RequestBody Map<String, Integer> request
+    ) {
+        validateOwnership(userId, voiceId);
+        voiceModelService.updateReminderInterval(voiceId, request.get("intervalDays"));
+        return ResponseEntity.noContent().build();
+    }
+
     private void validateOwnership(Long userId, Long voiceId) {
         VoiceModel model = voiceModelService.getById(voiceId);
         Long ownerId = model.getPersona().getUserId();

@@ -48,4 +48,10 @@ public class VoiceModelService {
     public List<VoiceModel> list(Long personaId) {
         return voiceModelRepository.findByPersona_Id(personaId);
     }
+
+    public void updateReminderInterval(Long voiceModelId, Integer days) {
+        VoiceModel model = voiceModelRepository.findById(voiceModelId)
+                .orElseThrow(() -> new IllegalArgumentException("VOICE_NOT_FOUND"));
+        model.updateReminderIntervalDays(days);
+    }
 }
