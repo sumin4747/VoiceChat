@@ -62,6 +62,15 @@ public class UserController {
         return ResponseEntity.ok(userService.changePassword(userId, request));
     }
 
+    @PatchMapping("/me/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody Map<String, String> request
+    ) {
+        userService.updateFcmToken(userId, request.get("fcmToken"));
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         userService.delete(id);

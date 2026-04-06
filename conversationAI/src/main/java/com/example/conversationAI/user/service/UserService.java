@@ -98,6 +98,12 @@ public class UserService {
         return UserResponse.from(user);
     }
 
+    public void updateFcmToken(Long userId, String fcmToken) {
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        user.updateFcmToken(fcmToken);
+    }
+
     public void delete(Long userId) {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
