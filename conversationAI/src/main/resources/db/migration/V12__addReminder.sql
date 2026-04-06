@@ -1,0 +1,1 @@
+ALTER TABLE voice_models ADD COLUMN reminder_interval_days INT NULL;

@@ -32,6 +32,9 @@ public class VoiceModel {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    @Column(name = "reminder_interval_days")
+    private Integer reminderIntervalDays;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -75,6 +78,8 @@ public class VoiceModel {
     public Status getStatus() { return status; }
     public int getProgressPercent() { return progressPercent; }
     public String getThumbnailUrl() { return thumbnailUrl; }
+    public Integer getReminderIntervalDays() { return reminderIntervalDays; }
+    public void updateReminderIntervalDays(Integer days) { this.reminderIntervalDays = days; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public enum Status {
