@@ -40,6 +40,9 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "fcm_token")
+    private String fcmToken;
+
     protected User() {}
 
     /** 일반 회원가입 */
@@ -77,6 +80,8 @@ public class User {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
+    public String getFcmToken() { return fcmToken; }
+    public void updateFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
 
     @Override
     public boolean equals(Object o) {
