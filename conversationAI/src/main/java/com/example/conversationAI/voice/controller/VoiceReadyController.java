@@ -6,11 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-/**
- * AI팀이 학습 완료 후 호출하는 내부 API
- * POST /internal/voices/{voiceId}/ready
- * { "modelPath": "/workspace/my_tts_model/checkpoint-epoch-6" }
- */
 @RestController
 @RequestMapping("/internal/voices")
 public class VoiceReadyController {
@@ -21,35 +16,35 @@ public class VoiceReadyController {
         this.statusService = statusService;
     }
 
-    /** 학습 완료 — READY 상태로 변경 */
+    /** AI팀 학습 완료 후 호출 — READY 상태로 변경 */
     @PostMapping("/{voiceId}/ready")
     public ResponseEntity<?> markReady(
             @PathVariable Long voiceId,
-            @RequestBody Map<String, String> request
+            @RequestBody(required = false) Map<String, Object> body
     ) {
-        String modelPath = request.get("modelPath");
-        if (modelPath == null || modelPath.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "modelPath는 필수입니다."));
-        }
-        statusService.markReady(voiceId, modelPath);
+        String modelPath = body != null ? (String) body.get("modelPath") : null;
+        statusService.markReady(voiceId, modelPath != null ? modelPath : "");
+        System.out.println("[READY] voiceId=" + voiceId + ", modelPath=" + modelPath);
         return ResponseEntity.ok(Map.of("voiceId", voiceId, "status", "READY"));
     }
 
-    /** 학습 실패 — FAILED 상태로 변경 */
+    /** AI팀 학습 실패 후 호출 — FAILED 상태로 변경 */
     @PostMapping("/{voiceId}/failed")
     public ResponseEntity<?> markFailed(@PathVariable Long voiceId) {
         statusService.markFailed(voiceId);
+        System.out.println("[FAILED] voiceId=" + voiceId);
         return ResponseEntity.ok(Map.of("voiceId", voiceId, "status", "FAILED"));
     }
 
-    /** 학습 진행률 업데이트 */
+    /** AI팀 학습 진행률 업데이트 */
     @PostMapping("/{voiceId}/progress")
     public ResponseEntity<?> updateProgress(
             @PathVariable Long voiceId,
-            @RequestBody Map<String, Integer> request
+            @RequestBody(required = false) Map<String, Object> body
     ) {
-        int percent = request.getOrDefault("percent", 0);
+        int percent = body != null ? (int) body.getOrDefault("percent", 0) : 0;
         statusService.updateProgress(voiceId, percent);
+        System.out.println("[PROGRESS] voiceId=" + voiceId + ", percent=" + percent);
         return ResponseEntity.ok(Map.of("voiceId", voiceId, "progressPercent", percent));
     }
 }

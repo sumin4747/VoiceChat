@@ -34,8 +34,8 @@ public class SecurityConfig {
                                 "/users/login",
                                 "/health",
                                 "/files/**",
-                                "/recording-sentences",  // 문장 목록
-                                "/internal/**"           // AI팀 내부 API
+                                "/recording-sentences",
+                                "/internal/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
