@@ -3,6 +3,7 @@ package com.example.conversationAI.user.controller;
 import com.example.conversationAI.user.dto.request.UserLoginRequest;
 import com.example.conversationAI.user.dto.request.UserPasswordChangeRequest;
 import com.example.conversationAI.user.dto.request.UserSignupRequest;
+import com.example.conversationAI.user.dto.request.FcmTokenRequest;
 import com.example.conversationAI.user.dto.response.LoginResponse;
 import com.example.conversationAI.user.dto.response.UserResponse;
 import com.example.conversationAI.user.service.UserService;
@@ -62,15 +63,6 @@ public class UserController {
         return ResponseEntity.ok(userService.changePassword(userId, request));
     }
 
-    @PatchMapping("/me/fcm-token")
-    public ResponseEntity<Void> updateFcmToken(
-            @AuthenticationPrincipal Long userId,
-            @RequestBody Map<String, String> request
-    ) {
-        userService.updateFcmToken(userId, request.get("fcmToken"));
-        return ResponseEntity.noContent().build();
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         userService.delete(id);
@@ -81,5 +73,14 @@ public class UserController {
     public ResponseEntity<Void> block(@PathVariable("id") Long id) {
         userService.block(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody FcmTokenRequest request
+    ) {
+        userService.updateFcmToken(userId, request.fcmToken());
+        return ResponseEntity.ok().build();
     }
 }

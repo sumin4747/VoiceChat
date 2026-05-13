@@ -30,10 +30,12 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/users/auth/otp/send",
                                 "/users/auth/otp/verify",
-                                "/users/signup",   // 회원가입
-                                "/users/login",    // 로그인
+                                "/users/signup",
+                                "/users/login",
                                 "/health",
-                                "/files/**"
+                                "/files/**",
+                                "/recording-sentences",  // 문장 목록
+                                "/internal/**"           // AI팀 내부 API
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

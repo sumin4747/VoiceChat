@@ -98,12 +98,6 @@ public class UserService {
         return UserResponse.from(user);
     }
 
-    public void updateFcmToken(Long userId, String fcmToken) {
-        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
-        user.updateFcmToken(fcmToken);
-    }
-
     public void delete(Long userId) {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -114,6 +108,12 @@ public class UserService {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         user.block();
+    }
+
+    public void updateFcmToken(Long userId, String fcmToken) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
+        user.updateFcmToken(fcmToken);
     }
 
     // ── 예외 클래스 ──────────────────────────────────────────────────────

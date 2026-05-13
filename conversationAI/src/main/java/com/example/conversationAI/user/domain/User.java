@@ -71,6 +71,8 @@ public class User {
         this.passwordHash = newPasswordHash;
     }
 
+    public void updateFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
+
     public Long getId() { return id; }
     public String getEmail() { return email; }
     public String getLoginId() { return loginId; }
@@ -81,7 +83,6 @@ public class User {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public String getFcmToken() { return fcmToken; }
-    public void updateFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
 
     @Override
     public boolean equals(Object o) {

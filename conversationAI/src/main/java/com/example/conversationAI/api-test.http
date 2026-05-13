@@ -1,0 +1,103 @@
+// 회원가입
+### 1. OTP 전송
+POST http://localhost:8080/users/auth/otp/send
+Content-Type: application/json
+
+{
+  "email": "remitjoy7579@naver.com"
+}
+
+### 2. OTP 검증
+POST http://localhost:8080/users/auth/otp/verify
+Content-Type: application/json
+
+{
+  "email": "remitjoy7579@naver.com",
+  "code": "522393"
+}
+
+### 3. 회원가입
+POST http://localhost:8080/users/signup
+Content-Type: application/json
+
+{
+  "email": "remitjoy7579@naver.com",
+  "verifyToken": "691b7633-0e89-465e-a096-858a9df68e12",
+  "loginId": "remitjoy04",
+  "password": "abcd1234!",
+  "nickname": "예진"
+}
+
+### 4. 로그인
+POST http://localhost:8080/users/login
+Content-Type: application/json
+
+{ "loginId": "remitjoy04", "password": "abcd1234!" }
+
+### 상태 확인
+GET http://localhost:8080/health
+
+// 페르소나 만들기
+### 1. 페르소나 생성
+POST http://localhost:8080/users/voices
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzc4NDczNDE2LCJleHAiOjE3Nzg0NzcwMTZ9.q8vPp9xBqHgGM7jIK7mUk3CTKuxngd_6FNIpdUkxDxg
+Content-Type: application/json
+
+{ "personName": "나", "birthDate": "2004-01-03" }
+
+### 2. 음성 넣기
+POST http://localhost:8080/users/voices/1/upload
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzc4NDcyNzU4LCJleHAiOjE3Nzg0NzYzNTh9.PTdJIWCG1zbCi0cn0MDjrwSa8tsBw5ZueFwpEg85GYc
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="files"; filename="000000.wav"
+Content-Type: audio/wav
+
+< /Users/vilab/Downloads/000000.wav
+--boundary--
+
+### 3. 학습 완료 상태 확인
+GET http://localhost:8080/users/voices/1/status
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzc4NDcyNzU4LCJleHAiOjE3Nzg0NzYzNTh9.PTdJIWCG1zbCi0cn0MDjrwSa8tsBw5ZueFwpEg85GYc
+
+### 4. 듣고 싶은 문장 저장 + TTS 생성
+POST http://localhost:8080/users/voices/1/phrases
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzc3NDQxNzg2LCJleHAiOjE3Nzc0NDUzODZ9.vR9hfMzCxsjbP_TefDYUVHQPqNNdoK-J0C6cR8ZEB8g
+Content-Type: application/json
+
+{ "content": "넌 충분히 잘하고 있어. 힘내자." }
+
+### 5. 텍스트 채팅
+POST http://localhost:8080/users/voices/1/chat
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzc4NDczNDE2LCJleHAiOjE3Nzg0NzcwMTZ9.q8vPp9xBqHgGM7jIK7mUk3CTKuxngd_6FNIpdUkxDxg
+Content-Type: application/json
+
+{ "message": "오늘 너무 힘들었어" }
+
+### 6. 음성 채팅
+POST http://localhost:8080/users/voices/1/chat/voice
+Authorization: Bearer {token}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="voice.wav"
+Content-Type: audio/wav
+
+< /Users/vilab/Downloads/voice.wav
+--boundary--
+
+### 7. 채팅 기록 조회
+GET http://localhost:8080/users/voices/1/messages
+Authorization: Bearer {token}
+
+### 8. 응답 스타일 설정
+PUT http://localhost:8080/users/personas/1/response-style
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzc4NDczNDE2LCJleHAiOjE3Nzg0NzcwMTZ9.q8vPp9xBqHgGM7jIK7mUk3CTKuxngd_6FNIpdUkxDxg
+Content-Type: application/json
+
+{ "style": "ADVICE" }
+
+### 9. 응답 스타일 조회
+GET http://localhost:8080/users/personas/1/response-style
+Authorization: Bearer {token}

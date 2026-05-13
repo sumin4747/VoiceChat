@@ -27,33 +27,26 @@ public class GeminiClient {
             .baseUrl("https://generativelanguage.googleapis.com")
             .build();
 
-    /**
-     * 텍스트 응답 + 감정 수치를 함께 반환.
-     */
     public GeminiResult generateWithHistoryAndEmotion(
             String systemInstruction,
             List<ChatMessage> history,
             String newMessage
     ) {
-        String emotionInstruction = systemInstruction + """
+        String fullInstruction = systemInstruction + """
 
                 [응답 형식 - 반드시 아래 JSON만 출력, 다른 텍스트 없이]
                 {
                   "reply": "실제 대화 응답 텍스트",
-                  "emotion": {
-                    "happiness": 0.0~0.4,
-                    "sadness": 0.0~0.4,
-                    "disgust": 0.0~0.1,
-                    "fear": 0.0~0.15,
-                    "surprise": 0.0~0.4,
-                    "anger": 0.0~0.4,
-                    "other": 0.2~0.4,
-                    "neutral": 0.0~1.0
-                  }
+                  "instruct": "TTS 음성 톤 지시문 (영어)"
                 }
-                대화 맥락에 맞게 감정 수치를 자연스럽게 설정해줘.
-                위로할 때는 sadness+neutral 높게, 반가울 때는 happiness 높게,
-                슬픈 소식엔 sadness 높게, 화가 날 땐 anger 조금 높게.
+
+                instruct 선택 기준 (대화 맥락에 맞게 자연스럽게 선택):
+                - "Soft and comforting tone."  → 위로, 슬픔 공감할 때
+                - "Warm and gentle tone."      → 따뜻하게 격려할 때
+                - "Calm and steady tone."      → 차분하게 조언할 때
+                - "Bright and warm tone."      → 기쁜 소식, 응원할 때
+                - "Gentle and reassuring tone." → 불안해하거나 걱정할 때
+                - "Gentle tone."               → 일반적인 대화
                 """;
 
         List<Map<String, Object>> contents = new ArrayList<>();
@@ -73,7 +66,7 @@ public class GeminiClient {
 
         Map<String, Object> body = Map.of(
                 "system_instruction", Map.of(
-                        "parts", List.of(Map.of("text", emotionInstruction))
+                        "parts", List.of(Map.of("text", fullInstruction))
                 ),
                 "contents", contents,
                 "generationConfig", Map.of(
@@ -94,13 +87,13 @@ public class GeminiClient {
 
             Map<String, Object> parsed = objectMapper.readValue(cleaned, Map.class);
             String reply = (String) parsed.get("reply");
-            Map<String, Object> emotionMap = (Map<String, Object>) parsed.get("emotion");
+            String instruct = (String) parsed.getOrDefault("instruct", "Gentle tone.");
 
-            return new GeminiResult(reply, emotionMap);
+            return new GeminiResult(reply, instruct);
 
         } catch (Exception e) {
-            System.err.println("Gemini 감정 JSON 파싱 실패, 기본 감정 사용: " + e.getMessage());
-            return new GeminiResult(rawText, defaultEmotion());
+            System.err.println("Gemini JSON 파싱 실패: " + e.getMessage());
+            return new GeminiResult(rawText, "Gentle tone.");
         }
     }
 
@@ -125,18 +118,5 @@ public class GeminiClient {
         return textPart.get("text").toString();
     }
 
-    private Map<String, Object> defaultEmotion() {
-        return Map.of(
-                "happiness", 0.3,
-                "sadness", 0.15,
-                "disgust", 0.05,
-                "fear", 0.05,
-                "surprise", 0.05,
-                "anger", 0.05,
-                "other", 0.3,
-                "neutral", 0.7
-        );
-    }
-
-    public record GeminiResult(String reply, Map<String, Object> emotion) {}
+    public record GeminiResult(String reply, String instruct) {}
 }

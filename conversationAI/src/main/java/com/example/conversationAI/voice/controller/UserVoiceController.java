@@ -1,12 +1,10 @@
 package com.example.conversationAI.voice.controller;
 
-import com.example.conversationAI.chat.domain.ChatMessage;
 import com.example.conversationAI.chat.service.ChatService;
 import com.example.conversationAI.persona.domain.Persona;
 import com.example.conversationAI.persona.service.PersonaService;
 import com.example.conversationAI.voice.domain.VoiceModel;
 import com.example.conversationAI.voice.service.VoiceModelService;
-import com.example.conversationAI.voice.service.VoiceTrainingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,28 +20,26 @@ public class UserVoiceController {
 
     private final PersonaService personaService;
     private final VoiceModelService voiceModelService;
-    private final VoiceTrainingService trainingService;
     private final ChatService chatService;
 
     public UserVoiceController(
             PersonaService personaService,
             VoiceModelService voiceModelService,
-            VoiceTrainingService trainingService,
             ChatService chatService
     ) {
         this.personaService = personaService;
         this.voiceModelService = voiceModelService;
-        this.trainingService = trainingService;
         this.chatService = chatService;
     }
 
+    /** POST /users/voices — 보이스 모델 생성 */
     @PostMapping
     public ResponseEntity<?> create(
             @AuthenticationPrincipal Long userId,
             @RequestBody Map<String, String> request
     ) {
         Persona persona = personaService.createRaw(userId, request.get("personName"), request.get("birthDate"));
-        VoiceModel model = voiceModelService.create(persona.getId(), "zonos");
+        VoiceModel model = voiceModelService.create(persona.getId(), "qwen3");
 
         return ResponseEntity.ok(Map.of(
                 "voiceId", model.getId(),
@@ -51,26 +47,7 @@ public class UserVoiceController {
         ));
     }
 
-    @PostMapping("/{voiceId}/upload")
-    public ResponseEntity<?> upload(
-            @AuthenticationPrincipal Long userId,
-            @PathVariable Long voiceId,
-            @RequestParam("files") List<MultipartFile> files
-    ) {
-        validateOwnership(userId, voiceId);
-
-        if (files == null || files.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "code", "BAD_REQUEST",
-                    "message", "파일을 1개 이상 업로드해야 합니다."
-            ));
-        }
-
-        trainingService.startTraining(voiceId, files);
-
-        return ResponseEntity.ok(Map.of("voiceId", voiceId));
-    }
-
+    /** GET /users/voices/{voiceId}/status — 학습 상태 확인 */
     @GetMapping("/{voiceId}/status")
     public ResponseEntity<?> status(
             @AuthenticationPrincipal Long userId,
@@ -85,6 +62,7 @@ public class UserVoiceController {
         ));
     }
 
+    /** GET /users/voices — 보이스 모델 목록 */
     @GetMapping
     public ResponseEntity<?> list(@AuthenticationPrincipal Long userId) {
         List<Map<String, Object>> response = voiceModelService.listByUser(userId).stream()
@@ -92,14 +70,14 @@ public class UserVoiceController {
                         "voiceId",     model.getId(),
                         "personName",  model.getPersona().getPersonaName(),
                         "createdAt",   model.getCreatedAt(),
-                        "status",      model.getStatus(),
-                        "thumbnailUrl", (Object) null
+                        "status",      model.getStatus()
                 ))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
     }
 
+    /** POST /users/voices/{voiceId}/chat — 텍스트 채팅 */
     @PostMapping("/{voiceId}/chat")
     public ResponseEntity<?> chat(
             @AuthenticationPrincipal Long userId,
@@ -115,6 +93,7 @@ public class UserVoiceController {
         ));
     }
 
+    /** POST /users/voices/{voiceId}/chat/voice — 음성 채팅 */
     @PostMapping("/{voiceId}/chat/voice")
     public ResponseEntity<?> chatWithVoice(
             @AuthenticationPrincipal Long userId,
@@ -130,6 +109,7 @@ public class UserVoiceController {
         ));
     }
 
+    /** GET /users/voices/{voiceId}/messages — 채팅 기록 */
     @GetMapping("/{voiceId}/messages")
     public ResponseEntity<?> history(
             @AuthenticationPrincipal Long userId,
@@ -147,17 +127,6 @@ public class UserVoiceController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
-    }
-
-    @PatchMapping("/{voiceId}/reminder")
-    public ResponseEntity<?> updateReminder(
-            @AuthenticationPrincipal Long userId,
-            @PathVariable Long voiceId,
-            @RequestBody Map<String, Integer> request
-    ) {
-        validateOwnership(userId, voiceId);
-        voiceModelService.updateReminderInterval(voiceId, request.get("intervalDays"));
-        return ResponseEntity.noContent().build();
     }
 
     private void validateOwnership(Long userId, Long voiceId) {

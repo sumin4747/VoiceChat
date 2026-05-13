@@ -14,7 +14,4 @@ public interface VoiceModelRepository extends JpaRepository<VoiceModel, Long> {
     Optional<VoiceModel> findByIdAndPersona_Id(Long id, Long personaId);
 
     List<VoiceModel> findByPersona_UserId(Long userId);
-
-    @Query("SELECT v FROM VoiceModel v WHERE v.reminderIntervalDays IS NOT NULL AND v.status = 'READY'")
-    List<VoiceModel> findAllWithReminderEnabled();
 }
