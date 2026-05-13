@@ -27,5 +27,9 @@ spring:
     scheduling:
       enabled: true
 
+  task:
+    scheduling:
+      enabled: true
+
 jwt:
   expiration: 3600000
