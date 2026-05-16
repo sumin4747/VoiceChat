@@ -11,13 +11,31 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 @Component
-public class LocalFileStorage {
+public class LocalFileStorage implements FileStorage {
 
     @Value("${storage.base-path}")
     private String basePath;
 
     @Value("${storage.base-url}")
     private String baseUrl;
+
+    @Override
+    public String uploadTtsResult(Long voiceId, byte[] audioBytes, String ext) {
+        String relativePath = "voices/tts/" + voiceId + "/" + UUID.randomUUID() + "." + ext;
+        saveBytesToDisk(audioBytes, relativePath);
+        return baseUrl + "/" + relativePath;
+    }
+
+    @Override
+    public String uploadRecording(Long userId, String sentenceId, MultipartFile file) throws IOException {
+        String relativePath = "recordings/" + userId + "/wavs/" + sentenceId + ".wav";
+        saveBytesToDisk(file.getBytes(), relativePath);
+        return baseUrl + "/" + relativePath;
+    }
+
+    public String uploadTtsResult(Long voiceId, byte[] audioBytes) {
+        return uploadTtsResult(voiceId, audioBytes, "wav");
+    }
 
     public String saveRawVoice(Long voiceId, MultipartFile file) {
         try {
@@ -32,16 +50,6 @@ public class LocalFileStorage {
         String relativePath = "voices/raw/" + voiceId + "/" + UUID.randomUUID() + "." + ext;
         Path target = saveBytesToDisk(bytes, relativePath);
         return target.toAbsolutePath().toString();
-    }
-
-    public String uploadTtsResult(Long voiceId, byte[] audioBytes) {
-        return uploadTtsResult(voiceId, audioBytes, "mp3");
-    }
-
-    public String uploadTtsResult(Long voiceId, byte[] audioBytes, String ext) {
-        String relativePath = "voices/tts/" + voiceId + "/" + UUID.randomUUID() + "." + ext;
-        saveBytesToDisk(audioBytes, relativePath);
-        return baseUrl + "/" + relativePath;
     }
 
     private Path saveBytesToDisk(byte[] bytes, String relativePath) {
