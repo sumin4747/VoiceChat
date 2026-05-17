@@ -24,15 +24,20 @@ public class FcmClient {
 
     private final Random random = new Random();
 
+    /** 매일 오후 9시 정기 알림 (랜덤 멘트) */
     public void sendNotification(String fcmToken) {
-        try {
-            String messageText = MESSAGES.get(random.nextInt(MESSAGES.size()));
+        String messageText = MESSAGES.get(random.nextInt(MESSAGES.size()));
+        sendCustomNotification(fcmToken, "안녕, 나야", messageText);
+    }
 
+    /** 커스텀 제목/내용 알림 (학습 완료 등) */
+    public void sendCustomNotification(String fcmToken, String title, String body) {
+        try {
             Message message = Message.builder()
                     .setToken(fcmToken)
                     .setNotification(Notification.builder()
-                            .setTitle("안녕, 나야")
-                            .setBody(messageText)
+                            .setTitle(title)
+                            .setBody(body)
                             .build())
                     .build();
 

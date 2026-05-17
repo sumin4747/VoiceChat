@@ -1,5 +1,6 @@
 package com.example.conversationAI.voice.service;
 
+import com.example.conversationAI.connector.runpod.RunPodClient;
 import com.example.conversationAI.persona.domain.Persona;
 import com.example.conversationAI.persona.repository.PersonaRepository;
 import com.example.conversationAI.voice.domain.VoiceModel;
@@ -15,19 +16,33 @@ public class VoiceModelService {
 
     private final VoiceModelRepository voiceModelRepository;
     private final PersonaRepository personaRepository;
+    private final RunPodClient runPodClient;
 
-    public VoiceModelService(VoiceModelRepository voiceModelRepository,
-                             PersonaRepository personaRepository) {
+    public VoiceModelService(
+            VoiceModelRepository voiceModelRepository,
+            PersonaRepository personaRepository,
+            RunPodClient runPodClient
+    ) {
         this.voiceModelRepository = voiceModelRepository;
         this.personaRepository = personaRepository;
+        this.runPodClient = runPodClient;
     }
 
+    /**
+     * VoiceModel 생성 + RunPod 학습 시작 요청
+     * status = TRAINING, progress = 0 으로 저장
+     */
     public VoiceModel create(Long personaId, String provider) {
         Persona persona = personaRepository.findById(personaId)
                 .orElseThrow(() -> new IllegalArgumentException("PERSONA_NOT_FOUND"));
 
         VoiceModel model = VoiceModel.create(persona, provider);
-        return voiceModelRepository.save(model);
+        VoiceModel saved = voiceModelRepository.save(model);
+
+        // RunPod에 비동기 학습 시작 요청
+        runPodClient.startTraining(saved.getId(), persona.getUserId());
+
+        return saved;
     }
 
     public VoiceModel get(Long personaId, Long modelId) {

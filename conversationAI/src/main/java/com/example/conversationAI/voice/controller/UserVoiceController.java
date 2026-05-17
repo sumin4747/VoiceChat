@@ -1,6 +1,7 @@
 package com.example.conversationAI.voice.controller;
 
 import com.example.conversationAI.chat.service.ChatService;
+import com.example.conversationAI.connector.stt.WhisperClient;
 import com.example.conversationAI.persona.domain.Persona;
 import com.example.conversationAI.persona.service.PersonaService;
 import com.example.conversationAI.voice.domain.VoiceModel;
@@ -21,15 +22,18 @@ public class UserVoiceController {
     private final PersonaService personaService;
     private final VoiceModelService voiceModelService;
     private final ChatService chatService;
+    private final WhisperClient whisperClient;
 
     public UserVoiceController(
             PersonaService personaService,
             VoiceModelService voiceModelService,
-            ChatService chatService
+            ChatService chatService,
+            WhisperClient whisperClient
     ) {
         this.personaService = personaService;
         this.voiceModelService = voiceModelService;
         this.chatService = chatService;
+        this.whisperClient = whisperClient;
     }
 
     /** POST /users/voices — 보이스 모델 생성 */
@@ -77,7 +81,22 @@ public class UserVoiceController {
         return ResponseEntity.ok(response);
     }
 
-    /** POST /users/voices/{voiceId}/chat — 텍스트 채팅 */
+    /** POST /users/voices/{voiceId}/stt — 음성 → 텍스트 변환만 반환 */
+    @PostMapping("/{voiceId}/stt")
+    public ResponseEntity<?> stt(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long voiceId,
+            @RequestParam("file") MultipartFile audioFile
+    ) {
+        validateOwnership(userId, voiceId);
+        String transcribed = whisperClient.transcribe(audioFile);
+
+        return ResponseEntity.ok(Map.of(
+                "userMessage", transcribed
+        ));
+    }
+
+    /** POST /users/voices/{voiceId}/chat — 텍스트 채팅 (LLM 응답 + TTS) */
     @PostMapping("/{voiceId}/chat")
     public ResponseEntity<?> chat(
             @AuthenticationPrincipal Long userId,
@@ -86,22 +105,6 @@ public class UserVoiceController {
     ) {
         validateOwnership(userId, voiceId);
         ChatService.ChatResult result = chatService.chat(voiceId, request.get("message"));
-
-        return ResponseEntity.ok(Map.of(
-                "replyText",   result.replyText(),
-                "ttsAudioUrl", result.ttsAudioUrl() != null ? result.ttsAudioUrl() : ""
-        ));
-    }
-
-    /** POST /users/voices/{voiceId}/chat/voice — 음성 채팅 */
-    @PostMapping("/{voiceId}/chat/voice")
-    public ResponseEntity<?> chatWithVoice(
-            @AuthenticationPrincipal Long userId,
-            @PathVariable Long voiceId,
-            @RequestParam("file") MultipartFile audioFile
-    ) {
-        validateOwnership(userId, voiceId);
-        ChatService.ChatResult result = chatService.chatWithVoice(voiceId, audioFile);
 
         return ResponseEntity.ok(Map.of(
                 "replyText",   result.replyText(),
