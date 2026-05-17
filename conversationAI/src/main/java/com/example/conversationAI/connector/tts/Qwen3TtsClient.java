@@ -26,10 +26,17 @@ public class Qwen3TtsClient implements TtsClient {
 
     @Override
     public byte[] synthesize(String text, byte[] referenceAudio, String instruct) {
+        return synthesize(text, referenceAudio, instruct, null);
+    }
+
+    public byte[] synthesize(String text, byte[] referenceAudio, String instruct, String modelPath) {
         Map<String, String> body = new HashMap<>();
         body.put("text", text);
         body.put("speaker", speaker);
         body.put("instruct", instruct != null ? instruct : "Gentle tone.");
+        if (modelPath != null) {
+            body.put("modelPath", modelPath);
+        }
 
         return webClient.post()
                 .uri("/tts")

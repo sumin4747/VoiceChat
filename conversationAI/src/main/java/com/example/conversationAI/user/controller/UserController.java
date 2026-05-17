@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -25,7 +26,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    /** POST /users/signup — 회원가입 */
     @PostMapping("/signup")
     public ResponseEntity<UserResponse> signup(@Valid @RequestBody UserSignupRequest request) {
         UserResponse response = userService.signup(request);
@@ -37,14 +37,11 @@ public class UserController {
         return ResponseEntity.created(location).body(response);
     }
 
-    /** POST /users/login — 로그인 */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
-        LoginResponse response = userService.login(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(userService.login(request));
     }
 
-    /** GET /users/me — 내 정보 조회 */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(userService.getById(userId));
@@ -61,6 +58,22 @@ public class UserController {
             @Valid @RequestBody UserPasswordChangeRequest request
     ) {
         return ResponseEntity.ok(userService.changePassword(userId, request));
+    }
+
+    @PatchMapping("/me/nickname")
+    public ResponseEntity<UserResponse> changeNickname(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody Map<String, String> body
+    ) {
+        return ResponseEntity.ok(userService.changeNickname(userId, body.get("nickname")));
+    }
+
+    @PatchMapping("/me/email")
+    public ResponseEntity<UserResponse> changeEmail(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody Map<String, String> body
+    ) {
+        return ResponseEntity.ok(userService.changeEmail(userId, body.get("email"), body.get("verifyToken")));
     }
 
     @DeleteMapping("/{id}")

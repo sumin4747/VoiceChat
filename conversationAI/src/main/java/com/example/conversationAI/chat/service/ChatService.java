@@ -5,6 +5,7 @@ import com.example.conversationAI.chat.repository.ChatMessageRepository;
 import com.example.conversationAI.common.storage.LocalFileStorage;
 import com.example.conversationAI.connector.llm.GeminiClient;
 import com.example.conversationAI.connector.stt.WhisperClient;
+import com.example.conversationAI.connector.tts.Qwen3TtsClient;
 import com.example.conversationAI.connector.tts.TtsClient;
 import com.example.conversationAI.responseStyle.domain.ResponseStyle;
 import com.example.conversationAI.responseStyle.repository.ResponseStyleRepository;
@@ -15,8 +16,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -27,7 +26,7 @@ public class ChatService {
     private final GeminiClient geminiClient;
     private final ResponseStyleRepository responseStyleRepository;
     private final VoiceModelRepository voiceModelRepository;
-    private final TtsClient ttsClient;
+    private final Qwen3TtsClient ttsClient;
     private final WhisperClient whisperClient;
     private final LocalFileStorage fileStorage;
 
@@ -36,7 +35,7 @@ public class ChatService {
             GeminiClient geminiClient,
             ResponseStyleRepository responseStyleRepository,
             VoiceModelRepository voiceModelRepository,
-            @Qualifier("qwen3TtsClient") TtsClient ttsClient,
+            @Qualifier("qwen3TtsClient") Qwen3TtsClient ttsClient,
             WhisperClient whisperClient,
             LocalFileStorage fileStorage
     ) {
@@ -84,7 +83,9 @@ public class ChatService {
     private String generateTtsIfReady(VoiceModel voiceModel, String text, String instruct) {
         if (voiceModel.getStatus() != VoiceModel.Status.READY) return null;
         try {
-            byte[] audioBytes = ttsClient.synthesize(text, null, instruct);
+            // modelPath(externalModelId)를 TTS 요청에 포함
+            String modelPath = voiceModel.getExternalModelId();
+            byte[] audioBytes = ttsClient.synthesize(text, null, instruct, modelPath);
             return fileStorage.uploadTtsResult(voiceModel.getId(), audioBytes, "wav");
         } catch (Exception e) {
             System.err.println("TTS 생성 실패: " + e.getMessage());

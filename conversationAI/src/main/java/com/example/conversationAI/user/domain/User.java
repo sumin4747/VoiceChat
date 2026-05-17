@@ -45,7 +45,6 @@ public class User {
 
     protected User() {}
 
-    /** 일반 회원가입 */
     public static User create(String email, String loginId, String passwordHash, String nickname) {
         User user = new User();
         user.email = email;
@@ -72,6 +71,14 @@ public class User {
     }
 
     public void updateFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
+
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void changeEmail(String email) {
+        this.email = email;
+    }
 
     public Long getId() { return id; }
     public String getEmail() { return email; }

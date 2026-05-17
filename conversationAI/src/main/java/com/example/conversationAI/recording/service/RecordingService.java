@@ -33,9 +33,10 @@ public class RecordingService {
         this.voiceModelRepository = voiceModelRepository;
     }
 
-    /** 녹음 문장 목록 조회 */
+    /** 녹음 문장 목록 조회 (20개만 반환) */
     public List<RecordingSentenceResponse> getSentences() {
         return sentenceRepository.findAll().stream()
+                .limit(20)
                 .map(RecordingSentenceResponse::from)
                 .toList();
     }
@@ -50,16 +51,13 @@ public class RecordingService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 sentence_id: " + sentenceId));
 
         try {
-            // wavs 디렉토리 생성
             Path wavsDir = Paths.get(basePath, "recordings", String.valueOf(userId), "wavs");
             Files.createDirectories(wavsDir);
 
-            // wav 파일 저장
             String fileName = sentenceId + ".wav";
             Path wavPath = wavsDir.resolve(fileName);
             Files.write(wavPath, audio.getBytes());
 
-            // metadata.txt 갱신
             updateMetadata(userId, sentenceId, sentence.getText(), wavsDir.getParent());
 
             System.out.println("녹음 저장 완료: " + wavPath);
@@ -73,18 +71,15 @@ public class RecordingService {
         Path metadataPath = baseDir.resolve("metadata.txt");
         File metaFile = metadataPath.toFile();
 
-        // 기존 내용 읽기
         StringBuilder existing = new StringBuilder();
         if (metaFile.exists()) {
             existing.append(Files.readString(metadataPath));
         }
 
-        // 이미 있는 sentenceId면 덮어쓰기 위해 해당 줄 제거
         String updated = existing.toString().lines()
                 .filter(line -> !line.startsWith("wavs/" + sentenceId + ".wav|"))
                 .reduce("", (a, b) -> a.isEmpty() ? b : a + "\n" + b);
 
-        // 새 항목 추가
         String newLine = "wavs/" + sentenceId + ".wav|" + text;
         String finalContent = updated.isEmpty() ? newLine : updated + "\n" + newLine;
 

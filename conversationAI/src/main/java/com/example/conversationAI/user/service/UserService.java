@@ -36,25 +36,17 @@ public class UserService {
         this.jwtProvider = jwtProvider;
     }
 
-    /**
-     * 회원가입.
-     * verifyToken으로 이메일 인증 완료 여부 확인 후 계정 생성.
-     */
     public UserResponse signup(UserSignupRequest request) {
-        // 1. verifyToken 유효성 검증
         otpCodeService.validateVerifyToken(request.email(), request.verifyToken());
 
-        // 2. 이메일 중복 확인
         if (userRepository.existsByEmailAndDeletedAtIsNull(request.email())) {
             throw new DuplicateEmailException(request.email());
         }
 
-        // 3. loginId 중복 확인
         if (userRepository.existsByLoginId(request.loginId())) {
             throw new DuplicateLoginIdException(request.loginId());
         }
 
-        // 4. 계정 생성
         String hashed = passwordEncoder.encode(request.password());
         User user = User.create(request.email(), request.loginId(), hashed, request.nickname());
         User saved = userRepository.save(user);
@@ -62,10 +54,6 @@ public class UserService {
         return UserResponse.from(saved);
     }
 
-    /**
-     * loginId/password 로그인.
-     * 응답: { token, isNewUser: false, user }
-     */
     @Transactional(readOnly = true)
     public LoginResponse login(UserLoginRequest request) {
         User user = userRepository.findByLoginIdAndDeletedAtIsNull(request.loginId())
@@ -98,6 +86,27 @@ public class UserService {
         return UserResponse.from(user);
     }
 
+    public UserResponse changeNickname(Long userId, String nickname) {
+        if (nickname == null || nickname.isBlank()) {
+            throw new IllegalArgumentException("닉네임을 입력해주세요.");
+        }
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        user.changeNickname(nickname.trim());
+        return UserResponse.from(user);
+    }
+
+    public UserResponse changeEmail(Long userId, String email, String verifyToken) {
+        otpCodeService.validateVerifyToken(email, verifyToken);
+        if (userRepository.existsByEmailAndDeletedAtIsNull(email)) {
+            throw new DuplicateEmailException(email);
+        }
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        user.changeEmail(email);
+        return UserResponse.from(user);
+    }
+
     public void delete(Long userId) {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -115,8 +124,6 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
         user.updateFcmToken(fcmToken);
     }
-
-    // ── 예외 클래스 ──────────────────────────────────────────────────────
 
     public static class UserNotFoundException extends RuntimeException {
         public UserNotFoundException(Long userId) {
