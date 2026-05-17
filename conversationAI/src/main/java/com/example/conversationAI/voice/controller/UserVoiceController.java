@@ -132,6 +132,17 @@ public class UserVoiceController {
         return ResponseEntity.ok(response);
     }
 
+    /** DELETE /users/voices/{voiceId} — 목소리 삭제 */
+    @DeleteMapping("/{voiceId}")
+    public ResponseEntity<?> delete(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long voiceId
+    ) {
+        validateOwnership(userId, voiceId);
+        voiceModelService.delete(voiceId);
+        return ResponseEntity.noContent().build();
+    }
+
     private void validateOwnership(Long userId, Long voiceId) {
         VoiceModel model = voiceModelService.getById(voiceId);
         Long ownerId = model.getPersona().getUserId();

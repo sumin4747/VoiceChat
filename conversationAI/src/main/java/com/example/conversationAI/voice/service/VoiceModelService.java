@@ -28,10 +28,6 @@ public class VoiceModelService {
         this.runPodClient = runPodClient;
     }
 
-    /**
-     * VoiceModel 생성 + RunPod 학습 시작 요청
-     * status = TRAINING, progress = 0 으로 저장
-     */
     public VoiceModel create(Long personaId, String provider) {
         Persona persona = personaRepository.findById(personaId)
                 .orElseThrow(() -> new IllegalArgumentException("PERSONA_NOT_FOUND"));
@@ -39,7 +35,6 @@ public class VoiceModelService {
         VoiceModel model = VoiceModel.create(persona, provider);
         VoiceModel saved = voiceModelRepository.save(model);
 
-        // RunPod에 비동기 학습 시작 요청
         runPodClient.startTraining(saved.getId(), persona.getUserId());
 
         return saved;
@@ -62,5 +57,11 @@ public class VoiceModelService {
 
     public List<VoiceModel> list(Long personaId) {
         return voiceModelRepository.findByPersona_Id(personaId);
+    }
+
+    public void delete(Long voiceId) {
+        VoiceModel model = voiceModelRepository.findById(voiceId)
+                .orElseThrow(() -> new IllegalArgumentException("VOICE_NOT_FOUND"));
+        voiceModelRepository.delete(model);
     }
 }
