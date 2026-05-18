@@ -88,7 +88,9 @@ public class UserVoiceController {
             @PathVariable Long voiceId,
             @RequestParam("file") MultipartFile audioFile
     ) {
+        System.out.println("[DEBUG] STT 요청 시작 - voiceId: " + voiceId + ", userId: " + userId);
         validateOwnership(userId, voiceId);
+        System.out.println("[DEBUG] ownership 확인 완료");
         String transcribed = whisperClient.transcribe(audioFile);
         System.out.println("[SUCCESS] STT 호출 성공: " + transcribed);
         return ResponseEntity.ok(Map.of(
