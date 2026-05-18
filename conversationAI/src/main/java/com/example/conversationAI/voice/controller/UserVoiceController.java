@@ -72,6 +72,7 @@ public class UserVoiceController {
         List<Map<String, Object>> response = voiceModelService.listByUser(userId).stream()
                 .map(model -> Map.<String, Object>of(
                         "voiceId",     model.getId(),
+                        "personaId",   model.getPersona().getId(),  // 추가
                         "personName",  model.getPersona().getPersonaName(),
                         "createdAt",   model.getCreatedAt(),
                         "status",      model.getStatus()
