@@ -72,9 +72,13 @@ public class WhisperClient {
             return response.get("text").toString().trim();
 
         } catch (WebClientResponseException e) {
+            System.err.println("[ERROR] Whisper STT 호출 실패 [" + e.getStatusCode() + "]: " + e.getResponseBodyAsString());
             throw new RuntimeException(
                     "Whisper STT 호출 실패 [" + e.getStatusCode() + "]: " + e.getResponseBodyAsString(), e
             );
+        } catch (Exception e) {
+            System.err.println("[ERROR] Whisper 예상치 못한 오류: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            throw new RuntimeException("Whisper STT 오류: " + e.getMessage(), e);
         }
     }
 }
