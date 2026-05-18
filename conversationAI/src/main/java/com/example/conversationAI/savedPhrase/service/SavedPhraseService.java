@@ -84,8 +84,8 @@ public class SavedPhraseService {
     private String generateTts(VoiceModel voiceModel, String content) {
         if (voiceModel.getStatus() != VoiceModel.Status.READY) return null;
         try {
-            // 나만의 문장 저장함은 항상 따뜻하고 부드러운 톤으로 고정
-            byte[] audioBytes = ttsClient.synthesize(content, null, "Warm and gentle tone.");
+            String modelPath = voiceModel.getExternalModelId();
+            byte[] audioBytes = ttsClient.synthesize(content, null, "Warm and gentle tone.", modelPath);
             return fileStorage.uploadTtsResult(voiceModel.getId(), audioBytes, "wav");
         } catch (Exception e) {
             System.err.println("저장 문장 TTS 생성 실패: " + e.getMessage());
