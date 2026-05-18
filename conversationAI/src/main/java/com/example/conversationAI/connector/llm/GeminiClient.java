@@ -98,24 +98,47 @@ public class GeminiClient {
     }
 
     private String callApi(Map<String, Object> body) {
-        Map response = webClient.post()
-                .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        int maxRetries = 3;
+        int retryDelayMs = 2000;
 
-        if (response == null) throw new IllegalStateException("Gemini API 응답이 null입니다.");
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                Map response = webClient.post()
+                        .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
+                        .bodyValue(body)
+                        .retrieve()
+                        .bodyToMono(Map.class)
+                        .block();
 
-        List candidates = (List) response.get("candidates");
-        if (candidates == null || candidates.isEmpty()) throw new IllegalStateException("Gemini API 응답에 candidates가 없습니다.");
+                if (response == null) throw new IllegalStateException("Gemini API 응답이 null입니다.");
 
-        Map first = (Map) candidates.get(0);
-        Map content = (Map) first.get("content");
-        List parts = (List) content.get("parts");
-        Map textPart = (Map) parts.get(0);
+                List candidates = (List) response.get("candidates");
+                if (candidates == null || candidates.isEmpty()) throw new IllegalStateException("Gemini API 응답에 candidates가 없습니다.");
 
-        return textPart.get("text").toString();
+                Map first = (Map) candidates.get(0);
+                Map content = (Map) first.get("content");
+                List parts = (List) content.get("parts");
+                Map textPart = (Map) parts.get(0);
+
+                return textPart.get("text").toString();
+
+            } catch (Exception e) {
+                boolean isRetryable = e.getMessage() != null &&
+                        (e.getMessage().contains("503") || e.getMessage().contains("429"));
+
+                if (isRetryable && attempt < maxRetries) {
+                    System.out.println("[RETRY] Gemini 호출 실패 (시도 " + attempt + "/" + maxRetries + "): " + e.getMessage());
+                    try {
+                        Thread.sleep(retryDelayMs * attempt);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    throw new RuntimeException("Gemini API 호출 실패: " + e.getMessage(), e);
+                }
+            }
+        }
+        throw new IllegalStateException("Gemini API 재시도 모두 실패");
     }
 
     public record GeminiResult(String reply, String instruct) {}
