@@ -108,13 +108,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleException(Exception e, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "timestamp", LocalDateTime.now().toString(),
-                "status", 500,
-                "code", e.getClass().getSimpleName(),
-                "message", e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.",
-                "path", request.getRequestURI(),
-                "errors", List.of()
-        ));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(Map.of(
+                        "timestamp", LocalDateTime.now().toString(),
+                        "status", 500,
+                        "code", e.getClass().getSimpleName(),
+                        "message", e.getMessage() != null ? e.getMessage() : "서버 오류가 발생했습니다.",
+                        "path", request.getRequestURI(),
+                        "errors", List.of()
+                ));
     }
 }
