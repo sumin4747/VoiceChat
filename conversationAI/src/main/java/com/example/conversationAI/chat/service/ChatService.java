@@ -57,9 +57,16 @@ public class ChatService {
 
         repository.save(ChatMessage.of(voiceModelId, ChatMessage.Role.USER, userMessage));
 
-        GeminiClient.GeminiResult geminiResult = geminiClient.generateWithHistoryAndEmotion(
-                systemInstruction, history, userMessage
-        );
+        GeminiClient.GeminiResult geminiResult;
+        try {
+            geminiResult = geminiClient.generateWithHistoryAndEmotion(
+                    systemInstruction, history, userMessage
+            );
+        } catch (Exception e) {
+            System.err.println("[ERROR] Gemini 호출 실패: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
 
         String replyText = geminiResult.reply();
         String instruct = geminiResult.instruct();
@@ -83,12 +90,12 @@ public class ChatService {
     private String generateTtsIfReady(VoiceModel voiceModel, String text, String instruct) {
         if (voiceModel.getStatus() != VoiceModel.Status.READY) return null;
         try {
-            // modelPath(externalModelId)를 TTS 요청에 포함
             String modelPath = voiceModel.getExternalModelId();
             byte[] audioBytes = ttsClient.synthesize(text, null, instruct, modelPath);
             return fileStorage.uploadTtsResult(voiceModel.getId(), audioBytes, "wav");
         } catch (Exception e) {
-            System.err.println("TTS 생성 실패: " + e.getMessage());
+            System.err.println("[ERROR] TTS 생성 실패: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
