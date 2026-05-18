@@ -20,6 +20,9 @@ public class Qwen3TtsClient implements TtsClient {
     ) {
         this.webClient = WebClient.builder()
                 .baseUrl(baseUrl)
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(10 * 1024 * 1024)) // 10MB로 늘리기
                 .build();
         this.speaker = speaker;
     }
