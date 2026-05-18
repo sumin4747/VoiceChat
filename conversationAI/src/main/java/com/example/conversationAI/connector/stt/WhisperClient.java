@@ -51,6 +51,8 @@ public class WhisperClient {
         builder.part("language", "ko");
 
         try {
+            long startTime = System.currentTimeMillis();  // 추가
+
             Map<?, ?> response = webClient.post()
                     .uri("/v1/audio/transcriptions")
                     .header("Authorization", "Bearer " + apiKey)
@@ -59,6 +61,9 @@ public class WhisperClient {
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
+
+            long elapsed = System.currentTimeMillis() - startTime;  // 추가
+            System.out.println("[STT] Whisper 호출 완료: " + elapsed + "ms");  // 추가
 
             if (response == null || !response.containsKey("text")) {
                 throw new RuntimeException("Whisper 응답에 text 필드 없음");
