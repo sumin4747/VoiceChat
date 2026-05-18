@@ -90,7 +90,7 @@ public class UserVoiceController {
     ) {
         validateOwnership(userId, voiceId);
         String transcribed = whisperClient.transcribe(audioFile);
-
+        System.out.println("[SUCCESS] STT 호출 성공: " + transcribed);
         return ResponseEntity.ok(Map.of(
                 "userMessage", transcribed
         ));

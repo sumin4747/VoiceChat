@@ -62,6 +62,7 @@ public class ChatService {
             geminiResult = geminiClient.generateWithHistoryAndEmotion(
                     systemInstruction, history, userMessage
             );
+            System.out.println("[SUCCESS] LLM 호출 성공");
         } catch (Exception e) {
             System.err.println("[ERROR] Gemini 호출 실패: " + e.getMessage());
             e.printStackTrace();
@@ -75,11 +76,18 @@ public class ChatService {
 
         repository.save(ChatMessage.ofWithAudio(voiceModelId, ChatMessage.Role.AI, replyText, ttsAudioUrl));
 
+        if (ttsAudioUrl != null) {
+            System.out.println("[SUCCESS] STT + LLM + TTS 전체 연결 성공! ttsAudioUrl=" + ttsAudioUrl);
+        } else {
+            System.out.println("[SUCCESS] LLM 응답 성공 (TTS 미생성 - READY 상태 아님)");
+        }
+
         return new ChatResult(replyText, ttsAudioUrl);
     }
 
     public ChatResult chatWithVoice(Long voiceModelId, MultipartFile audioFile) {
         String userMessage = whisperClient.transcribe(audioFile);
+        System.out.println("[SUCCESS] STT 호출 성공: " + userMessage);
         return chat(voiceModelId, userMessage);
     }
 
@@ -154,6 +162,7 @@ public class ChatService {
                 + "[일반 원칙]\n"
                 + "- 리포트 형식 금지. 마크다운 기호 금지.\n"
                 + "- 공허한 긍정 강요 금지\n"
+                + "- 사용자가 한 말을 그대로 반복하거나 요약하는 것 금지. 새로운 시각이나 반응으로 응답한다."
                 + "- 사용자의 감정을 축소하거나 무시하는 표현 금지\n"
                 + "- 의료적 진단이나 치료 효과를 암시하는 표현 금지\n"
                 + "- 2~3문장 이내로 짧고 따뜻하게 답한다\n"
