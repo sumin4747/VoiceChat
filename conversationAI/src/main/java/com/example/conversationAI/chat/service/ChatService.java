@@ -166,7 +166,8 @@ public class ChatService {
                 + "- 사용자의 감정을 축소하거나 무시하는 표현 금지\n"
                 + "- 의료적 진단이나 치료 효과를 암시하는 표현 금지\n"
                 + "- 응답 길이는 스타일에 맞게 조절한다. 공감형/솔직형은 2~3문장, 정리형/조언형은 필요시 더 길어도 된다.\n"
-                + "- 한 번에 하나의 질문만 한다\n";
+                + "- 한 번에 하나의 질문만 한다\n"
+                + "- ADVICE 스타일일 때는 질문으로 끝내지 않는다. 반드시 구체적인 제안이나 조언으로 끝낸다.\n";
     }
 
     public record ChatResult(String replyText, String ttsAudioUrl) {}
