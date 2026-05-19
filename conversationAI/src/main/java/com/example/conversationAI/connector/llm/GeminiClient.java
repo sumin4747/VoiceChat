@@ -160,13 +160,35 @@ public class GeminiClient {
                 )),
                 "generationConfig", Map.of(
                         "temperature", 0.0,
-                        "maxOutputTokens", 10
+                        "maxOutputTokens", 10,
+                        "thinkingConfig", Map.of("thinkingBudget", 0)  // thinking 비활성화
                 )
         );
 
         try {
-            String result = callApi(body).trim().toLowerCase();
+            Map response = webClient.post()
+                    .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response == null) return false;
+
+            List candidates = (List) response.get("candidates");
+            if (candidates == null || candidates.isEmpty()) return false;
+
+            Map first = (Map) candidates.get(0);
+            Map content = (Map) first.get("content");
+            if (content == null) return false;
+
+            List parts = (List) content.get("parts");
+            if (parts == null || parts.isEmpty()) return false;
+
+            Map textPart = (Map) parts.get(0);
+            String result = textPart.get("text").toString().trim().toLowerCase();
             return result.contains("true");
+
         } catch (Exception e) {
             System.err.println("[DEPRESSION GEMINI] 분석 실패: " + e.getMessage());
             return false;
