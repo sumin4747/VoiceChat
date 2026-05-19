@@ -44,4 +44,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Modifying
     @Query("DELETE FROM ChatMessage m WHERE m.createdAt < :cutoff")
     void deleteOlderThan(@Param("cutoff") LocalDateTime cutoff);
+
+    List<ChatMessage> findByVoiceModelIdAndRoleAndCreatedAtAfterOrderByCreatedAtAsc(
+            Long voiceModelId, ChatMessage.Role role, LocalDateTime after
+    );
 }

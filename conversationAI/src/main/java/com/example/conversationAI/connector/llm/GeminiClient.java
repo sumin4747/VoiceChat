@@ -141,5 +141,37 @@ public class GeminiClient {
         throw new IllegalStateException("Gemini API 재시도 모두 실패");
     }
 
+    public boolean isDepressed(String message) {
+        Map<String, Object> body = Map.of(
+                "system_instruction", Map.of(
+                        "parts", List.of(Map.of("text",
+                                "너는 감정 분석 AI야. 아래 기준으로만 판단해.\n" +
+                                        "true를 출력하는 경우: 무기력함, 지속적인 슬픔, 삶의 의미 상실, 공허함, " +
+                                        "아무것도 하기 싫다는 표현, 오래 지속되는 절망감, 살기 싫다, 사라지고 싶다, " +
+                                        "존재 자체에 대한 부정적 표현이 느껴질 때.\n" +
+                                        "false를 출력하는 경우: 특정 사건으로 인한 일시적 감정, 단순 스트레스, " +
+                                        "가벼운 피로감, 오늘 힘들었다는 정도의 가벼운 표현, 긍정적 내용이 포함된 경우.\n" +
+                                        "true 또는 false만 출력해. 다른 말은 절대 하지 마."
+                        ))
+                ),
+                "contents", List.of(Map.of(
+                        "role", "user",
+                        "parts", List.of(Map.of("text", message))
+                )),
+                "generationConfig", Map.of(
+                        "temperature", 0.0,
+                        "maxOutputTokens", 10
+                )
+        );
+
+        try {
+            String result = callApi(body).trim().toLowerCase();
+            return result.contains("true");
+        } catch (Exception e) {
+            System.err.println("[DEPRESSION GEMINI] 분석 실패: " + e.getMessage());
+            return false;
+        }
+    }
+
     public record GeminiResult(String reply, String instruct) {}
 }
