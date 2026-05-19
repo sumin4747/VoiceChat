@@ -87,7 +87,7 @@ public class ChatService {
         }
 
         // 우울 지속 여부 체크
-        checkDepression(voiceModelId, userMessage);
+        new Thread(() -> checkDepression(voiceModelId, userMessage)).start();
 
         return new ChatResult(replyText, ttsAudioUrl);
     }
