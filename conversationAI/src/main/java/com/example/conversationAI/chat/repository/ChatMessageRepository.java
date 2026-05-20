@@ -48,4 +48,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     List<ChatMessage> findByVoiceModelIdAndRoleAndCreatedAtAfterOrderByCreatedAtAsc(
             Long voiceModelId, ChatMessage.Role role, LocalDateTime after
     );
+
+    boolean existsByVoiceModelIdAndRoleAndContentContaining(
+            Long voiceModelId, ChatMessage.Role role, String content
+    );
 }

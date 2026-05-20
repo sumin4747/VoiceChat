@@ -117,15 +117,18 @@ public class ChatService {
 
     private void checkDepression(Long voiceModelId, String userMessage) {
         try {
+            // 1단계: 현재 메시지 우울 감정 분석
             boolean isDepressed = geminiClient.isDepressed(userMessage);
             if (!isDepressed) return;
 
+            // 2단계: 최근 14일 대화 기록 조회
             LocalDateTime twoWeeksAgo = LocalDateTime.now().minusDays(14);
             List<ChatMessage> recentMessages = repository
                     .findByVoiceModelIdAndRoleAndCreatedAtAfterOrderByCreatedAtAsc(
                             voiceModelId, ChatMessage.Role.USER, twoWeeksAgo
                     );
 
+            // 3단계: 날짜별 우울 감지 일수 카운트
             Set<LocalDate> depressedDays = new HashSet<>();
             for (ChatMessage msg : recentMessages) {
                 if (geminiClient.isDepressed(msg.getContent())) {
@@ -136,18 +139,29 @@ public class ChatService {
             int depressedDayCount = depressedDays.size();
             System.out.println("[DEPRESSION CHECK] 최근 14일 중 우울 감지 일수: " + depressedDayCount);
 
+            // 4단계: 일수 기준으로 권유 메시지 발송 (중복 방지)
             if (depressedDayCount >= 10) {
-                String counselMessage = "요즘 2주 가까이 많이 힘든 감정이 계속되고 있는 것 같아. " +
-                        "이런 감정이 오래 지속될 때는 혼자 감당하기보다 전문 상담을 받아보는 게 도움이 될 수 있어. " +
-                        "정신건강 위기상담전화 1577-0199로 연락해보는 건 어떨까?";
-                repository.save(ChatMessage.ofWithAudio(voiceModelId, ChatMessage.Role.AI, counselMessage, null));
-                System.out.println("[DEPRESSION CHECK] 전문 상담 권유 메시지 발송");
+                boolean alreadySent = repository.existsByVoiceModelIdAndRoleAndContentContaining(
+                        voiceModelId, ChatMessage.Role.AI, "1577-0199"
+                );
+                if (!alreadySent) {
+                    String counselMessage = "요즘 2주 가까이 많이 힘든 감정이 계속되고 있는 것 같아. " +
+                            "이런 감정이 오래 지속될 때는 혼자 감당하기보다 전문 상담을 받아보는 게 도움이 될 수 있어. " +
+                            "정신건강 위기상담전화 1577-0199로 연락해보는 건 어떨까?";
+                    repository.save(ChatMessage.ofWithAudio(voiceModelId, ChatMessage.Role.AI, counselMessage, null));
+                    System.out.println("[DEPRESSION CHECK] 전문 상담 권유 메시지 발송");
+                }
 
             } else if (depressedDayCount >= 7) {
-                String counselMessage = "요즘 일주일 넘게 힘든 감정이 이어지고 있는 것 같아. " +
-                        "혼자 감당하기 어려우면 전문가와 얘기해보는 것도 방법이야.";
-                repository.save(ChatMessage.ofWithAudio(voiceModelId, ChatMessage.Role.AI, counselMessage, null));
-                System.out.println("[DEPRESSION CHECK] 경계선 권유 메시지 발송");
+                boolean alreadySent = repository.existsByVoiceModelIdAndRoleAndContentContaining(
+                        voiceModelId, ChatMessage.Role.AI, "전문가와 얘기해보는 것도 방법이야"
+                );
+                if (!alreadySent) {
+                    String counselMessage = "요즘 일주일 넘게 힘든 감정이 이어지고 있는 것 같아. " +
+                            "혼자 감당하기 어려우면 전문가와 얘기해보는 것도 방법이야.";
+                    repository.save(ChatMessage.ofWithAudio(voiceModelId, ChatMessage.Role.AI, counselMessage, null));
+                    System.out.println("[DEPRESSION CHECK] 경계선 권유 메시지 발송");
+                }
             }
 
         } catch (Exception e) {

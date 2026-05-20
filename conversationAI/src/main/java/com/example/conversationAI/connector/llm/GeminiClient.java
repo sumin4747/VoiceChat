@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.example.conversationAI.chat.domain.ChatMessage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -142,28 +143,31 @@ public class GeminiClient {
     }
 
     public boolean isDepressed(String message) {
-        Map<String, Object> body = Map.of(
-                "system_instruction", Map.of(
-                        "parts", List.of(Map.of("text",
-                                "너는 감정 분석 AI야. 아래 기준으로만 판단해.\n" +
-                                        "true를 출력하는 경우: 무기력함, 지속적인 슬픔, 삶의 의미 상실, 공허함, " +
-                                        "아무것도 하기 싫다는 표현, 오래 지속되는 절망감, 살기 싫다, 사라지고 싶다, " +
-                                        "존재 자체에 대한 부정적 표현이 느껴질 때.\n" +
-                                        "false를 출력하는 경우: 특정 사건으로 인한 일시적 감정, 단순 스트레스, " +
-                                        "가벼운 피로감, 오늘 힘들었다는 정도의 가벼운 표현, 긍정적 내용이 포함된 경우.\n" +
-                                        "true 또는 false만 출력해. 다른 말은 절대 하지 마."
-                        ))
-                ),
-                "contents", List.of(Map.of(
-                        "role", "user",
-                        "parts", List.of(Map.of("text", message))
-                )),
-                "generationConfig", Map.of(
-                        "temperature", 0.0,
-                        "maxOutputTokens", 10,
-                        "thinkingConfig", Map.of("thinkingBudget", 0)  // thinking 비활성화
-                )
-        );
+        Map<String, Object> thinkingConfig = new HashMap<>();
+        thinkingConfig.put("thinkingBudget", 0);
+
+        Map<String, Object> generationConfig = new HashMap<>();
+        generationConfig.put("temperature", 0.0);
+        generationConfig.put("maxOutputTokens", 10);
+        generationConfig.put("thinkingConfig", thinkingConfig);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("system_instruction", Map.of(
+                "parts", List.of(Map.of("text",
+                        "너는 감정 분석 AI야. 아래 기준으로만 판단해.\n" +
+                                "true를 출력하는 경우: 무기력함, 지속적인 슬픔, 삶의 의미 상실, 공허함, " +
+                                "아무것도 하기 싫다는 표현, 오래 지속되는 절망감, 살기 싫다, 사라지고 싶다, " +
+                                "존재 자체에 대한 부정적 표현이 느껴질 때.\n" +
+                                "false를 출력하는 경우: 특정 사건으로 인한 일시적 감정, 단순 스트레스, " +
+                                "가벼운 피로감, 오늘 힘들었다는 정도의 가벼운 표현, 긍정적 내용이 포함된 경우.\n" +
+                                "true 또는 false만 출력해. 다른 말은 절대 하지 마."
+                ))
+        ));
+        body.put("contents", List.of(Map.of(
+                "role", "user",
+                "parts", List.of(Map.of("text", message))
+        )));
+        body.put("generationConfig", generationConfig);
 
         try {
             Map response = webClient.post()
@@ -187,6 +191,7 @@ public class GeminiClient {
 
             Map textPart = (Map) parts.get(0);
             String result = textPart.get("text").toString().trim().toLowerCase();
+            System.out.println("[DEPRESSION GEMINI] 분석 결과: " + result);
             return result.contains("true");
 
         } catch (Exception e) {
