@@ -169,35 +169,51 @@ public class GeminiClient {
         )));
         body.put("generationConfig", generationConfig);
 
-        try {
-            Map response = webClient.post()
-                    .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
-                    .bodyValue(body)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
+        int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                Map response = webClient.post()
+                        .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
+                        .bodyValue(body)
+                        .retrieve()
+                        .bodyToMono(Map.class)
+                        .block();
 
-            if (response == null) return false;
+                if (response == null) return false;
 
-            List candidates = (List) response.get("candidates");
-            if (candidates == null || candidates.isEmpty()) return false;
+                List candidates = (List) response.get("candidates");
+                if (candidates == null || candidates.isEmpty()) return false;
 
-            Map first = (Map) candidates.get(0);
-            Map content = (Map) first.get("content");
-            if (content == null) return false;
+                Map first = (Map) candidates.get(0);
+                Map content = (Map) first.get("content");
+                if (content == null) return false;
 
-            List parts = (List) content.get("parts");
-            if (parts == null || parts.isEmpty()) return false;
+                List parts = (List) content.get("parts");
+                if (parts == null || parts.isEmpty()) return false;
 
-            Map textPart = (Map) parts.get(0);
-            String result = textPart.get("text").toString().trim().toLowerCase();
-            System.out.println("[DEPRESSION GEMINI] 분석 결과: " + result);
-            return result.contains("true");
+                Map textPart = (Map) parts.get(0);
+                String result = textPart.get("text").toString().trim().toLowerCase();
+                System.out.println("[DEPRESSION GEMINI] 분석 결과: " + result);
+                return result.contains("true");
 
-        } catch (Exception e) {
-            System.err.println("[DEPRESSION GEMINI] 분석 실패: " + e.getMessage());
-            return false;
+            } catch (Exception e) {
+                boolean isRetryable = e.getMessage() != null &&
+                        (e.getMessage().contains("503") || e.getMessage().contains("429"));
+
+                if (isRetryable && attempt < maxRetries) {
+                    System.out.println("[DEPRESSION GEMINI] 재시도 " + attempt + "/" + maxRetries);
+                    try {
+                        Thread.sleep(2000L * attempt);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    System.err.println("[DEPRESSION GEMINI] 분석 실패: " + e.getMessage());
+                    return false;
+                }
+            }
         }
+        return false;
     }
 
     public record GeminiResult(String reply, String instruct) {}

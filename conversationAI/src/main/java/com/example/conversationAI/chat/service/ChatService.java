@@ -147,12 +147,12 @@ public class ChatService {
                 if (!alreadySent) {
                     String counselMessage = "요즘 2주 가까이 많이 힘든 감정이 계속되고 있는 것 같아. " +
                             "이런 감정이 오래 지속될 때는 혼자 감당하기보다 전문 상담을 받아보는 게 도움이 될 수 있어. " +
-                            "정신건강 위기상담전화 1577-0199로 연락해보는 건 어떨까?";
+                            "아니면 정신건강 위기상담전화 1577-0199로 연락해보는 건 어떨까?";
                     repository.save(ChatMessage.ofWithAudio(voiceModelId, ChatMessage.Role.AI, counselMessage, null));
                     System.out.println("[DEPRESSION CHECK] 전문 상담 권유 메시지 발송");
                 }
 
-            } else if (depressedDayCount >= 7) {
+            } else if (depressedDayCount >= 1) {
                 boolean alreadySent = repository.existsByVoiceModelIdAndRoleAndContentContaining(
                         voiceModelId, ChatMessage.Role.AI, "전문가와 얘기해보는 것도 방법이야"
                 );
