@@ -140,7 +140,7 @@ public class ChatService {
             System.out.println("[DEPRESSION CHECK] 최근 14일 중 우울 감지 일수: " + depressedDayCount);
 
             // 4단계: 일수 기준으로 권유 메시지 발송 (중복 방지)
-            if (depressedDayCount >= 10) {
+            if (depressedDayCount >= 1) {
                 boolean alreadySent = repository.existsByVoiceModelIdAndRoleAndContentContaining(
                         voiceModelId, ChatMessage.Role.AI, "1577-0199"
                 );
@@ -152,7 +152,7 @@ public class ChatService {
                     System.out.println("[DEPRESSION CHECK] 전문 상담 권유 메시지 발송");
                 }
 
-            } else if (depressedDayCount >= 1) {
+            } else if (depressedDayCount >= 10) {
                 boolean alreadySent = repository.existsByVoiceModelIdAndRoleAndContentContaining(
                         voiceModelId, ChatMessage.Role.AI, "전문가와 얘기해보는 것도 방법이야"
                 );
