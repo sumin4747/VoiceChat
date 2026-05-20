@@ -104,7 +104,7 @@ public class GeminiClient {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 Map response = webClient.post()
-                        .uri("/v1/models/" + model + ":generateContent?key=" + apiKey)
+                        .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
                         .bodyValue(body)
                         .retrieve()
                         .bodyToMono(Map.class)
@@ -167,7 +167,7 @@ public class GeminiClient {
 
         try {
             Map response = webClient.post()
-                    .uri("/v1/models/" + model + ":generateContent?key=" + apiKey)
+                    .uri("/v1beta/models/" + model + ":generateContent?key=" + apiKey)
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(Map.class)
