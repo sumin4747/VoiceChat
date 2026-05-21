@@ -4,7 +4,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import reactor.netty.http.client.HttpClient;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,8 +25,17 @@ public class Qwen3TtsClient implements TtsClient {
             @Value("${qwen3-tts.url}") String baseUrl,
             @Value("${qwen3-tts.speaker:my_voice}") String speaker
     ) {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                .responseTimeout(Duration.ofSeconds(300)) // 5분 타임아웃
+                .doOnConnected(conn ->
+                        conn.addHandlerLast(new ReadTimeoutHandler(300, TimeUnit.SECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(300, TimeUnit.SECONDS))
+                );
+
         this.webClient = WebClient.builder()
                 .baseUrl(baseUrl)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer
                         .defaultCodecs()
                         .maxInMemorySize(10 * 1024 * 1024))
