@@ -27,10 +27,10 @@ public class Qwen3TtsClient implements TtsClient {
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-                .responseTimeout(Duration.ofSeconds(300)) // 5분 타임아웃
+                .responseTimeout(Duration.ofSeconds(600)) // 10분 타임아웃
                 .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(300, TimeUnit.SECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(300, TimeUnit.SECONDS))
+                        conn.addHandlerLast(new ReadTimeoutHandler(600, TimeUnit.SECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(600, TimeUnit.SECONDS))
                 );
 
         this.webClient = WebClient.builder()
