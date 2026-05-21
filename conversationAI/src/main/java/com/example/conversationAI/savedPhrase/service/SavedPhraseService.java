@@ -37,24 +37,29 @@ public class SavedPhraseService {
 
     public SavedPhraseResponse create(Long voiceModelId, CreateSavedPhraseRequest request) {
         VoiceModel voiceModel = getVoiceModel(voiceModelId);
+        System.out.println("[SavedPhrase] 문장 저장 요청 수신 - content: " + request.content());
 
         SavedPhrase phrase = SavedPhrase.create(voiceModelId, request.content());
         savedPhraseRepository.save(phrase);
+        System.out.println("[SavedPhrase] DB 저장 완료 - phraseId: " + phrase.getId());
 
-        // TTS를 백그라운드에서 생성 (프엔팀 응답 기다리지 않음)
         Long phraseId = phrase.getId();
         new Thread(() -> {
+            System.out.println("[SavedPhrase] TTS 요청 시작 - phraseId: " + phraseId);
             String audioUrl = generateTts(voiceModel, request.content());
             if (audioUrl != null) {
                 savedPhraseRepository.findById(phraseId).ifPresent(p -> {
                     p.updateAudioUrl(audioUrl);
                     savedPhraseRepository.save(p);
-                    System.out.println("[SavedPhrase] TTS 백그라운드 완료 - url: " + audioUrl);
+                    System.out.println("[SavedPhrase] TTS 완료 - phraseId: " + phraseId + ", url: " + audioUrl);
                 });
+            } else {
+                System.err.println("[SavedPhrase] TTS 실패 - phraseId: " + phraseId);
             }
         }).start();
 
-        return SavedPhraseResponse.from(phrase); // TTS 기다리지 않고 바로 응답
+        System.out.println("[SavedPhrase] 응답 반환 - phraseId: " + phraseId);
+        return SavedPhraseResponse.from(phrase);
     }
 
     @Transactional(readOnly = true)
