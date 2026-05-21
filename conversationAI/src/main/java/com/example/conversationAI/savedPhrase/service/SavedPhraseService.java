@@ -41,12 +41,20 @@ public class SavedPhraseService {
         SavedPhrase phrase = SavedPhrase.create(voiceModelId, request.content());
         savedPhraseRepository.save(phrase);
 
-        String audioUrl = generateTts(voiceModel, request.content());
-        if (audioUrl != null) {
-            phrase.updateAudioUrl(audioUrl);
-        }
+        // TTS를 백그라운드에서 생성 (프엔팀 응답 기다리지 않음)
+        Long phraseId = phrase.getId();
+        new Thread(() -> {
+            String audioUrl = generateTts(voiceModel, request.content());
+            if (audioUrl != null) {
+                savedPhraseRepository.findById(phraseId).ifPresent(p -> {
+                    p.updateAudioUrl(audioUrl);
+                    savedPhraseRepository.save(p);
+                    System.out.println("[SavedPhrase] TTS 백그라운드 완료 - url: " + audioUrl);
+                });
+            }
+        }).start();
 
-        return SavedPhraseResponse.from(phrase);
+        return SavedPhraseResponse.from(phrase); // TTS 기다리지 않고 바로 응답
     }
 
     @Transactional(readOnly = true)
@@ -82,13 +90,23 @@ public class SavedPhraseService {
     }
 
     private String generateTts(VoiceModel voiceModel, String content) {
-        if (voiceModel.getStatus() != VoiceModel.Status.READY) return null;
+        if (voiceModel.getStatus() != VoiceModel.Status.READY) {
+            System.out.println("[SavedPhrase] READY 상태 아님: " + voiceModel.getStatus());
+            return null;
+        }
         try {
             String modelPath = voiceModel.getExternalModelId();
+            System.out.println("[SavedPhrase] TTS 요청 시작 - content: " + content + ", modelPath: " + modelPath);
             byte[] audioBytes = ttsClient.synthesize(content, null, "Warm and gentle tone.", modelPath);
-            return fileStorage.uploadTtsResult(voiceModel.getId(), audioBytes, "wav");
+            if (audioBytes == null || audioBytes.length == 0) {
+                System.err.println("[SavedPhrase] TTS 응답이 비어있음");
+                return null;
+            }
+            String url = fileStorage.uploadTtsResult(voiceModel.getId(), audioBytes, "wav");
+            System.out.println("[SavedPhrase] TTS 완료 - url: " + url);
+            return url;
         } catch (Exception e) {
-            System.err.println("저장 문장 TTS 생성 실패: " + e.getMessage());
+            System.err.println("[SavedPhrase] TTS 생성 실패: " + e.getMessage());
             return null;
         }
     }

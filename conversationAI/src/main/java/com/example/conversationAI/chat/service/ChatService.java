@@ -103,11 +103,21 @@ public class ChatService {
     }
 
     private String generateTtsIfReady(VoiceModel voiceModel, String text, String instruct) {
-        if (voiceModel.getStatus() != VoiceModel.Status.READY) return null;
+        if (voiceModel.getStatus() != VoiceModel.Status.READY) {
+            System.out.println("[TTS] READY 상태 아님: " + voiceModel.getStatus());
+            return null;
+        }
         try {
             String modelPath = voiceModel.getExternalModelId();
+            System.out.println("[TTS] 요청 시작 - modelPath: " + modelPath + ", textLen: " + text.length());
             byte[] audioBytes = ttsClient.synthesize(text, null, instruct, modelPath);
-            return fileStorage.uploadTtsResult(voiceModel.getId(), audioBytes, "wav");
+            if (audioBytes == null || audioBytes.length == 0) {
+                System.err.println("[TTS] 응답이 비어있음");
+                return null;
+            }
+            String url = fileStorage.uploadTtsResult(voiceModel.getId(), audioBytes, "wav");
+            System.out.println("[TTS] 완료 - url: " + url);
+            return url;
         } catch (Exception e) {
             System.err.println("[ERROR] TTS 생성 실패: " + e.getMessage());
             e.printStackTrace();
